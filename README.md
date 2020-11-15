@@ -43,3 +43,20 @@ The program gets three parameters
 ```
 ./vfdd HEY 0 0
 ```
+<p align=center>
+   <img src="https://i.imgur.com/B0nfHCf.jpg" width=250>
+</p>
+
+```
+./vfdd LOL 0 0
+```
+<p align=center>
+   <img src="https://i.imgur.com/PXp4Udc.jpg" width=250>
+</p>
+
+```
+./vfdd 1956 1 1
+```
+<p align=center>
+   <img src="https://i.imgur.com/24G7nnn.jpg" width=250>
+</p>
