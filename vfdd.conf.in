@@ -1,0 +1,73 @@
+{
+  "display": {
+     "device": "/sys/devices/platform/meson-vfd",
+     "sysfile": "overlay",
+     "grid_num": 5,
+     "segment_no": [ 3, 4, 5, 0, 1, 2, 6, 7 ],
+     "digit_map": [ 3, 2, 1, 0 ],
+     "brightness": 50,
+     "functions": {
+          "time": {
+              "enable": true,
+              "order": 0,
+	      "format": "%H%M"
+	  },
+          "date": {
+              "enable": true,
+              "order": 1,
+	      "format": "%d%m"
+	  },
+          "temp": {
+              "enable": true,
+	      "sysfile": "/sys/devices/platform/scpi/scpi:sensors/hwmon/hwmon0/temp1_input",
+              "order": 2,
+	      "format": "t %02d"
+	  }
+     }
+  },
+  "dotleds": {
+      "grid_map": 4,
+      "functions": {
+          "alarm": {
+              "enable": true,
+	      "sysfile": "/tmp/alarm",
+	      "driver": "alarm",
+	      "bit": 0
+          },
+          "usb": {
+              "enable": true,
+	      "sysfile": "/sys/block/sda/stat",
+	      "driver": "usb",
+	      "bit": 1
+          },
+          "bluetooth": {
+              "enable": true,
+	      "driver": "bluetooth",
+	      "bit": 2
+          },
+          "hdmi": {
+              "enable": true,
+	      "sysfile": "/sys/class/drm/card0/card0-HDMI-A-1/status",
+	      "driver": "hdmi",
+	      "bit": 3
+          },
+          "colon": {
+              "enable": true,
+	      "driver": "colon",
+	      "bit": 4
+          },
+          "net": {
+              "enable": true,
+	      "sysfile": "/sys/class/net/eth0/flags",
+	      "driver": "net",
+	      "bit": 5
+          },
+          "wifi": {
+              "enable": true,
+	      "sysfile": "/sys/class/net/wlan0/flags",
+	      "driver": "net",
+	      "bit": 6
+          }
+      }
+  }
+}

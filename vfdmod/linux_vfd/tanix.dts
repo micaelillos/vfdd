@@ -1,0 +1,15 @@
+        meson-vfd {
+                compatible = "amlogic,aml_vfd";
+                dev_name = "meson-vfd";
+                status = "okay";
+                gpios = <&gpio_ao GPIOAO_4  GPIO_ACTIVE_HIGH>,  /* STB */
+                        <&gpio GPIODV_27 GPIO_ACTIVE_HIGH>,  /* CLK */
+                        <&gpio GPIODV_26 GPIO_ACTIVE_HIGH>;  /* DI/DO */
+                /* dot LED names */
+                dot_names = "ALA", "USB", "BLU", "II", ":", "NET", "WIFI";
+                /* segment_no order a = 0, ... h = 7 */
+                segment_no = /bits/ 8 < 3 4 5 0 1 2 6 7 >; 
+                grid_num = /bits/ 8 < 3 2 1 0 >; 
+                /* dot LED <16_bit_word bit_number> in raw display buffer ('overlay') */
+                dot_bits = /bits/ 8 <4 0 4 1 4 2 4 3 4 4 4 5 4 6 >; 
+        };

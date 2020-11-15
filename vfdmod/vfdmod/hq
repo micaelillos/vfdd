@@ -1,0 +1,15 @@
+#!/bin/bash
+
+ROOTDIR=../../../linux
+
+KERNELRELEASE=$(ls -l $ROOTDIR | sed -e 's/.*linux-//')
+
+export CC=aarch64-linux-musl-
+ARCH=arm64 CROSS_COMPILE=${CC} make -C $ROOTDIR M=$PWD $*
+
+if [ $? -eq 0 ]; then
+  if $(ping -q -W 1 -c 1 tanix > /dev/null); then
+    sudo ssh tanix mkdir -p /lib/modules/${KERNELRELEASE}/extra/
+    sudo scp vfdmod.ko tanix:/lib/modules/${KERNELRELEASE}/extra/
+  fi
+fi

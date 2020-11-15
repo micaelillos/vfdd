@@ -1,0 +1,3 @@
+#!/bin/sh
+insmod /lib/modules/$(uname -r)/extra/vfdmod.ko
+exec vfdd -L /var/log/vfdd.log 2>&1

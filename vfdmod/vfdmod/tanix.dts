@@ -1,0 +1,8 @@
+        meson-vfd {
+                compatible = "amlogic,aml_vfd";
+                dev_name = "meson-vfd";
+                status = "okay";
+                gpios = <&gpio_ao GPIOAO_4  GPIO_ACTIVE_HIGH>,  /* STB */
+                        <&gpio GPIODV_27 GPIO_ACTIVE_HIGH>,  /* CLK */
+                        <&gpio GPIODV_26 GPIO_ACTIVE_HIGH>;  /* DI/DO */
+        };

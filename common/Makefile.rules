@@ -1,0 +1,169 @@
+# native linux Makefile.rules
+
+# compiler path is in PATH
+
+# Be silent per default, but 'make V=1' will show all compiler calls.
+ifneq ($(V),1)
+Q		:= @
+NULL		:= 2>/dev/null
+endif
+
+###############################################################################
+# Executables
+
+CC		:= gcc
+CXX		:= g++
+LD		:= gcc
+AR		:= ar
+AS		:= as
+NM		:= nm
+OBJCOPY		:= objcopy
+OBJDUMP		:= objdump
+BINSIZE         := size
+GDB		:= gdb
+MKSYM           :=
+
+BINDIR          ?= /usr/local/bin
+###############################################################################
+# Source files
+
+OBJS            += $(SRCS:.c=.o) $(ASRCS:.S=.o)
+
+LDSCRIPT	?= 
+
+###############################################################################
+# C flags
+
+CFLAGS          += -Wmissing-declarations
+CFLAGS          += -Wmissing-prototypes
+CFLAGS          += -Wstrict-prototypes
+CFLAGS          += -Wbad-function-cast
+CFLAGS          += -Wsign-compare
+CFLAGS          += -Wnested-externs
+CFLAGS          += -Wshadow
+CFLAGS          += -Waggregate-return
+
+###############################################################################
+# C++ flags
+
+CXXFLAGS	+= $(CFLAGS)
+
+###############################################################################
+# C & C++ preprocessor common flags
+
+CPPFLAGS	+= -MD
+CPPFLAGS	+= -Wall -Wundef
+CPPFLAGS	+= $(DEFS)
+
+###############################################################################
+# Linker flags
+
+ifdef $(LDSCRIPT)
+LDFLAGS		+= -T$(LDSCRIPT)
+endif
+
+###############################################################################
+# libraries
+
+#ARFLAGS          += cr # ue implicit rule 'rv'
+SOFLAGS          += -shared 
+
+###############################################################################
+###############################################################################
+
+.SUFFIXES: .elf .bin .ihx .srec .list .map .images
+.SECONDEXPANSION:
+.SECONDARY:
+
+ifneq ($(LIBRARY),)
+all: $(LIBRARY)
+$(info TARGET '$(LIBRARY)')
+endif
+ifneq ($(BINARY),)
+$(info TARGET '$(BINARY)')
+all: elf 
+endif
+
+elf: $(BINARY)
+sym: $(BINARY).sym
+asm: $(BINARY).asm
+bin: $(BINARY).bin
+ihx: $(BINARY).ihx
+srec: $(BINARY).srec
+list: $(BINARY).list
+
+images: $(BINARY).images
+
+
+%.images: %.bin %.ihx %.srec %.list %.map
+	@#printf "*** $* images generated ***\n"
+
+%.asm: %.elf
+	@printf "  OBJCOPY $(*).asm\n"
+	$(Q)$(OBJDUMP) -S $(*).elf > $(*).asm
+	$(BINSIZE) $(BINARY).elf
+
+%.sym : %.elf
+	$(NM) -n -S $< > $(*).nm
+	$(BINSIZE) $(*).elf
+	$(Q))$(MKSYM) -o $(*).sym
+
+%.bin: %.elf
+	@printf "  OBJCOPY $(*).bin\n"
+	$(Q)$(OBJCOPY) -Obinary $(*).elf $(*).bin
+
+%.ihx: %.elf
+	@printf "  OBJCOPY $(*).ihx\n"
+	$(Q)$(OBJCOPY) -Oihex $(*).elf $(*).ihx
+
+%.srec: %.elf
+	@#printf "  OBJCOPY $(*).srec\n"
+	$(Q)$(OBJCOPY) -Osrec $(*).elf $(*).srec
+
+%.list: %.elf
+	@#printf "  OBJDUMP $(*).list\n"
+	$(Q)$(OBJDUMP) -S $(*).elf > $(*).list
+
+$(BINARY): $(OBJS) 
+	@printf "  LD      $(@)\n"
+	$(Q)$(LD) $(LDFLAGS) $(ARCH_FLAGS) $(OBJS) $(LDLIBS) -o $@
+
+%.a: $(OBJS)
+	@printf "  AR      $(*).a\n"
+	$(Q)$(AR) $(ARFLAGS) $(*).a $(OBJS)
+
+%.so: $(OBJS)
+	@printf "  LD -shared  $(*).so\n"
+	$(Q)$(LD) $(SOFLAGS)  -o $(*).so $(OBJS)
+
+%.o: %.c
+	@printf "  CC      $(*).c\n"
+	$(Q)$(CC) $(CFLAGS) $(CPPFLAGS) $(ARCH_FLAGS) -o $(*).o -c $(*).c
+
+%.o: %.cxx
+	@#printf "  CXX     $(*).cxx\n"
+	$(Q)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(ARCH_FLAGS) -o $(*).o -c $(*).cxx
+
+%.o: %.cpp
+	@printf "  CXX     $(*).cpp\n"
+	$(Q)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(ARCH_FLAGS) -o $(*).o -c $(*).cpp
+
+clean:
+	@printf "  CLEAN\n"
+	$(Q)$(RM) *.o *.d $(BINARY) *.elf *.bin *.ihx *.srec *.list *.map *~ \
+              *.asm *.nm *.sym core.[0-9]* $(LIBRARY)
+
+###############################################################################
+# default install rule
+
+install_recipe ?= cp $(BINARY) /usr/local/bin
+
+###############################################################################
+
+install:
+	$(install_recipe)
+
+
+.PHONY: images clean elf bin ihx srec list
+
+-include $(OBJS:.o=.d)

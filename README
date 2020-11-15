@@ -1,0 +1,7 @@
+vfdd - vfd daemon
+
+
+segment_no : provide the bit number to turn on for segment a, b, c, ...
+             segment_no[0] = 3 , segment a is bit 3
+             segment_no[3] = 0 , segment d is bit 0
+	     

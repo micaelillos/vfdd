@@ -1,0 +1,34 @@
+#!/bin/bash
+
+MYHOME=$HOME
+
+if [ "x$USER" = "xroot" ]; then
+   MYHOME=$(eval echo "~$SUDO_USER")
+fi
+#echo $MYHOME
+
+if [ "x$1" = "xhqesp" ]; then
+  echo /home8/espressif/esp-sdk/rbota
+elif [ "x$1" = "xespmcu" ]; then
+  echo $MYHOME/prj/comesp/mk-mcu
+elif [ "x$1" = "xesp" ]; then
+  echo /home8/espressif/esp-sdk
+elif [ "x$1" = "xesp_gcc" ]; then
+  echo /home8/espressif/esp-open-sdk
+elif [ "x$1" = "xavr" ]; then
+  echo $MYHOME/prj/avr
+elif [ "x$1" = "xstm32" ]; then
+  echo $MYHOME/prj/comstm32
+elif [ "x$1" = "xvlstm32" ]; then
+  echo $MYHOME/prj/comstm32/vl
+elif [ "x$1" = "xstm32_gcc" ]; then
+  echo /home8/gnuarm/arm-none-eabi/bin
+elif [ "x$1" = "xstm32_lib" ]; then
+  echo /home8/opencm3/libopencm3
+elif [ "x$1" = "xstm32_vllib" ]; then
+  echo /home8/opencm3/libopencm3vl
+elif [ "x$1" = "xsdklinux" ]; then
+  echo $MYHOME/prj/common
+elif [ "x$1" = "xmyhome" ]; then
+  echo $MYHOME
+fi

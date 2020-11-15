@@ -1,0 +1,143 @@
+# common native linux Makefile.include
+
+PROJECT ?= $(BINARY)
+
+# root install issue
+ifeq ($(USER),root)
+MYHOME = $(shell getent passwd $(SUDO_USER) | cut -d : -f 6 )
+else
+MYHOME = $(HOME)
+endif
+
+# COMMON = $(MYHOME)/prj/common
+COMMON = common
+
+#$(info common '$(COMMON)')
+
+PJNAME  ?= $(shell echo $(PROJECT) | sed -e 's/^\(.\)/\U&/')
+
+COMPILETIME = $(shell date +"%s")
+MY_DATE := $(shell date +%Y%m%d)
+
+ASRCS   += $(COMASRCS)
+SRCS    += $(COMSRCS) $(LOCALSRCS)
+
+ifdef LOCALSRCS1
+SRCS    += $(LOCALSRCS1)
+endif
+ifdef LOCALSRCS2
+SRCS    += $(LOCALSRCS2)
+endif
+
+DEFS    += -DLINUX
+DEFS    += -DPJVERSION="\"$(PJNAME)-$(MY_DATE) $(WEBSITE)\""
+
+ifdef LIB_BACTRACE
+DEFS  += -DUSE_BACKTRACE
+endif
+
+ifdef LIBRARY
+CFLAGS  += -fPIC
+endif
+
+ifeq ($(STRICT_GCC),1)
+CFLAGS  += -std=c99 -pedantic
+CFLAGS  += -Wcast-align
+endif
+
+ifdef LIB_BACTRACE
+LDLIBS   += -lbacktrace
+endif
+
+HEADERS += $(COMHEADERS) $(LOCALHEADERS)
+
+ifdef LOCALHEADERS1
+HEADERS += $(LOCALHEADERS1)
+endif
+
+ifdef LOCALHEADERS2
+HEADERS += $(LOCALHEADERS2)
+endif
+
+FILES   += Makefile ChangeLog README
+FILES   += $(HOME)/bin/nextit
+FILES   += /usr/local/bin/where-sdk
+
+COMLINKS = $(COMSRCS) $(COMHEADERS) $(COMASRCS)
+LOCALLINKS = $(LOCALSRCS) $(LOCALHEADERS)
+
+ifdef LOCALDIR1
+LOCALLINKS1 = $(LOCALSRCS1) $(LOCALHEADERS1)
+endif
+
+ifdef LOCALDIR2
+LOCALLINKS2 = $(LOCALSRCS2) $(LOCALHEADERS2)
+endif
+
+PACK_DIR = $(PROJECT)-$(MY_DATE)
+PACKAGE = $(PACK_DIR).tar.xz
+PACK_FILES = $(SRCS) $(ASRC) $(HEADERS) $(FILES)
+COMPACK_FILES = Makefile.include Makefile.rules
+LINK_FILES = loop.h timer.h
+
+include $(COMMON)/Makefile.rules
+
+pjversion.h : $(SRCS)
+	nextit -i -n $(PJNAME) pjversion.h
+
+links :
+	make rmlinks
+	make .link
+
+.link :
+	for file in $(COMLINKS); do \
+	  ln -sf $(COMMON)/$$file; \
+	  if echo $$file | grep -s ".loop.h"; then \
+	    ln -sf $$file loop.h;  \
+	  fi ; \
+	  if echo $$file | grep -s "timer..*\.h"; then \
+	    ln -sf $$file timer.h;  \
+	  fi ; \
+	done
+	for file in $(LOCALLINKS); do \
+	  ln -sf $(LOCALDIR)/$$file; \
+	done
+ifdef LOCALDIR2
+	for file in $(LOCALLINKS2); do \
+	  ln -sf $(LOCALDIR2)/$$file; \
+	done
+endif
+ifdef LOCALDIR1
+	for file in $(LOCALLINKS1); do \
+	  ln -sf $(LOCALDIR1)/$$file; \
+	done
+endif
+	touch .link
+
+rmlinks:
+	rm -f .link $(COMLINKS) $(LOCALLINKS) $(LOCALLINKS1) $(LOCALLINKS2) loop.h
+
+img :
+	outimage -o $(SCHNAME).png -w 1280 -h 960 $(SCHNAME).sch
+	outimage -o $(SCHNAME)_1.png -w 640 -h 480 $(SCHNAME).sch
+
+tar :
+	mkdir -p $(PACK_DIR)/common
+	cp $(PACK_FILES)  $(PACK_DIR)
+	touch -f $(PACK_DIR)/.link
+	cp -p $(COMMON)/COPYING $(PACK_DIR)
+	for file in $(COMPACK_FILES); do \
+	  cp -p $(COMMON)/$$file $(PACK_DIR)/common/$$file; \
+	done
+	for file in $(LINK_FILES); do \
+	  if test -h $$file ; then \
+	    cp -av $$file $(PACK_DIR); \
+	  fi \
+	done
+	makmodify -p COMMON $(PACK_DIR)/Makefile $(PACK_DIR)/common/Makefile.include
+ifdef ADDDIRS
+	cp -r -a $(ADDDIRS) $(PACK_DIR)
+endif
+	tar Jcvf $(PACKAGE) $(PACK_DIR)
+	rm -fr $(PACK_DIR)
+

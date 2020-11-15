@@ -1,0 +1,131 @@
+#!/usr/bin/perl -w
+
+# create a version number file if not exist
+#     -v incremment version number 
+#     -p incremment subversion number
+#     -i incremment iteration number 
+#     -n name : add project name 
+
+$rep = 0;
+$id = 0;
+$silent = 0;
+$avrflag = 0;
+$picflag = 0;
+$stmflag = 0;
+$espflag = 0;
+$projectName = "";
+$file = "";
+
+for ( $i = 0; $i <= $#ARGV ; $i++ ) {
+    if ( $ARGV[$i] =~ /^-/ ) {
+	if ( $ARGV[$i] eq "-i" ) {
+	    $rep = 0;
+	} elsif ( $ARGV[$i] eq "-p" ) {
+	    $rep = 1;
+	} elsif ( $ARGV[$i] eq "-v" ) {
+	    $rep = 2;
+	} elsif ( $ARGV[$i] eq "-n" ) {
+	    $i++;
+	    $projectName =  $ARGV[$i];
+	} elsif ( $ARGV[$i] eq "-id" ) {
+	    $id++;
+	} elsif ( $ARGV[$i] eq "-s" ) {
+	    $silent++;
+	} elsif ( $ARGV[$i] eq "-avr" ) {
+	    $avrflag++;
+	} elsif ( $ARGV[$i] eq "-pic" ) {
+	    $picflag++;
+	} elsif ( $ARGV[$i] eq "-stm" ) {
+	    $stmflag++;
+	} elsif ( $ARGV[$i] eq "-esp" ) {
+	    $espflag++;
+	} else {
+	    print STDERR "nexit: Bad option '$ARGV[$i]'\n";
+	    exit(1);
+	}
+    } else {
+	$file = $ARGV[$i];
+    }
+}
+process($file, $rep, $projectName );
+
+sub process {
+  my($filename, $rep, $name) = @_;
+#  print "$filename\n";
+    
+  my($version) = "1.0.0";
+  my($found) = 0; 
+  
+  if ( -f $filename ){
+    unless (open(INPUT, "<$filename")) {
+      print STDERR "nexit: Can't open $filename: $!\n";
+      return;
+    }
+
+    while (<INPUT>) {
+      if ( /char\s+version\[\]\s*\w*\s*=/ ) {
+        chomp();
+	$found = 1; 
+        /.*\"(\d+)\.(\d+)\.(\d+)\".*/;
+        $i = $3;
+        $p = $2;
+        $v = $1;
+        if ( $rep == 0 ) {
+          $i += 1;
+        }
+        if ( $rep == 1 ) {
+          $i = 0;
+	  $p += 1;
+        }
+        if ( $rep == 2 ) {
+          $i = 0;
+          $p = 0;
+          $v += 1;
+        }
+        $version = "$v.$p.$i";
+        last;
+      }
+    }
+    close(INPUT);
+    if ( $found == 0 ) {
+      print STDERR "nexit: Error: Version not found\n";
+      exit(1);
+    }
+	
+  }
+  if ( $silent == 0 ){
+    print STDOUT ("$filename - $version\n");
+  }
+  outVersion( $filename, $version, $name);
+}
+
+sub outVersion {
+    my(  $filename, $version, $name) = @_;
+
+    my($progmem) = ""; 
+    if ($avrflag) {
+	$progmem = "PROGMEM";
+    }
+    my($out);
+    my($tmpfile) = $filename . "_tmp";
+    unless (open($out, ">$tmpfile")) {
+	print STDERR "Can't open $tmpfile: $!\n";
+	return;
+    }
+    print $out ( "#ifndef VERSION_H\n");
+    print $out ( "#define VERSION_H\n");
+    if ( $id ) {
+	$sys = `uname -s`;
+	chomp($sys);
+	$dat = `date +%Y:%m:%d:%T`;
+	chomp($dat);
+	print $out ( "const char cident[] $progmem = \"$sys $dat\";\n");
+    }
+    if ( $name ne "" ) {
+	print $out ( "const char projectName[] $progmem = \"$name\";\n");
+    }
+    print $out ( "const char version[] $progmem = \"$version\";\n");
+    print $out ( "#endif /* VERSION_H */\n");
+    close($out);
+    rename( $tmpfile, $filename);
+}   
